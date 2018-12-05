@@ -53,13 +53,17 @@ size_t Hash(node* state)
 void print_path(double**map,node* goal, node *start, int y_size, int x_size)
 {
   node*current = goal;
+  vector<node*> path;
   while(current->x!=start->x&&current->y!=start->y)
   {
     cout<<current->x<<' '<<current->y<<' '<<current->signature<<'\n';
     map[current->x][current->y] = 122;
+    path.push_back(current);
     current = current->parent;
   }
-  display_map(map,y_size,x_size);
+  colored_display_path(map,y_size,x_size,path);
+
+  // colored_display_map(map,y_size,x_size);
 }
 #include "append&check_signatures.h"
 float my_heuristic(node* current, node* goal)
@@ -130,7 +134,7 @@ int planner(double** map,string desired_signature, vector<Point2f> representativ
   node* start; node* goal;
   goal = new node;
   goal->x = 470;goal->y = 300; goal->h = 0;
-  goal->signature = "-1-3";
+  goal->signature = "123";
   start = new node;
   start->x = 0;
   start->y = 0;
@@ -152,7 +156,7 @@ int planner(double** map,string desired_signature, vector<Point2f> representativ
   test = new node;
   while(!open.empty())
   {
-    counter+=1;
+    number_of_expansions+=1;
     node* current = open.top();
     if(current->signature==goal->signature)
     data.push_back(Point(current->x,current->y));
@@ -183,7 +187,7 @@ int planner(double** map,string desired_signature, vector<Point2f> representativ
         successor->f = successor->g + successor->h;
         successor->parent = current;
         string action_signature = find_signature_action(current,successor, representative_points, dX[i]);
-        successor->signature = append_signature(current->signature, action_signature);
+        successor->signature = new_append_signature(current->signature, action_signature);
 
         if(closed_map[Hash(successor)]!=1)
         {

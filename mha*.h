@@ -1,6 +1,7 @@
 #include<queue>
 #include<math.h>
 #include <unordered_map>
+#include <boost/functional/hash.hpp>
 #define NUMOFDIRS 8
 int dX[NUMOFDIRS] = {-1, -1, -1,  0,  0,  1, 1, 1};
 int dY[NUMOFDIRS] = {-1,  0,  1, -1,  1, -1, 0, 1};
@@ -36,25 +37,33 @@ float cost(node* current,node* goal)
 {
   return sqrt(pow(current->x-goal->x,2)+pow(current->y-goal->y,2));
 }
-std::string Hash(node* state)
+size_t Hash(node* state)
 {
+  using boost::hash_value;
+  using boost::hash_combine;
   std::string string;
-  string = std::to_string(state->x);
-  string.append(std::to_string(state->y));
-  string.append(state->signature);
-  return string;
+  size_t seed = 0;
+  hash_combine(seed,state->x* 2654435761);
+  hash_combine(seed,state->y* 19349663);
+  for(int i=0;i<state->signature.size();i++)
+  hash_combine(seed,state->signature[i]*83492791);
+  return seed;
 }
 #include "display.h"
 void print_path(double**map,node* goal, node *start, int y_size, int x_size)
 {
   node*current = goal;
+  vector<node*> path;
   while(current->x!=start->x&&current->y!=start->y)
   {
     cout<<current->x<<' '<<current->y<<' '<<current->signature<<'\n';
     map[current->x][current->y] = 122;
+    path.push_back(current);
     current = current->parent;
   }
-  display_map(map,y_size,x_size);
+  // display_map(map,y_size,x_size);
+  colored_display_path(map,y_size,x_size,path);
+
 }
 #include "append&check_signatures.h"
 float my_heuristic(node* current, node* goal)
@@ -118,26 +127,26 @@ int planner(double** map,string desired_signature, vector<Point2f> representativ
   cout<<representative_points[1]<<'\n';
   cout<<representative_points[2]<<'\n';
   string state_signature = "";
-  std::unordered_map <std::string, int> inad_open_map;
-  std::unordered_map <std::string, int> ad_open_map;
-  std::unordered_map <std::string, int> inad_closed_map;
-  std::unordered_map <std::string, int> ad_closed_map;
+  std::unordered_map <std::size_t, int> inad_open_map;
+  std::unordered_map <std::size_t, int> ad_open_map;
+  std::unordered_map <std::size_t, int> inad_closed_map;
+  std::unordered_map <std::size_t, int> ad_closed_map;
 
-  std::unordered_map <std::string, node*> inad_open_map_of_states;
-  std::unordered_map <std::string, node*> ad_open_map_of_states;
-  std::unordered_map <std::string, node*> closed_map_of_states;
+  std::unordered_map <std::size_t, node*> inad_open_map_of_states;
+  std::unordered_map <std::size_t, node*> ad_open_map_of_states;
+  std::unordered_map <std::size_t, node*> closed_map_of_states;
   // cout<<"Signature "<<'\n';
   // cout<<state_signature<<'\n';
   node* start; node* goal;
   goal = new node;
-  goal->x = 474;goal->y = 350; goal->h[0] = goal->h[1] = 0;
-  goal->signature = "";
+  goal->x = 470;goal->y = 300; goal->h[0] = goal->h[1] = 0;
+  goal->signature = "123";
   start = new node;
   start->x = 0;
   start->y = 0;
   start->g = 0;
   start->h[0] = (heuristic(start,goal));
-  start->h[1] = (my_heuristic(start,goal));
+  start->h[1] = heuristic(start,goal)+ 100*(my_heuristic(start,goal));
   start->f[0] = start->h[0] + start->g;
   start->f[1] = start->h[1] + start->g;
   node* a;
@@ -164,6 +173,7 @@ int planner(double** map,string desired_signature, vector<Point2f> representativ
     node* ad; node* inad;
     ad = ad_open.top();
     inad = inad_open.top();
+    number_of_expansions+=1;
     if(inad->f[1]<=w2*ad->f[0])
     {
   //   number_of_expansions+=1;
@@ -197,7 +207,7 @@ int planner(double** map,string desired_signature, vector<Point2f> representativ
             successor->g = current->g + cost(successor,current);
             successor->h[0] = heuristic(successor,goal);
             successor->f[0] = successor->g+successor->h[0];
-            successor->h[1] = 10*my_heuristic(successor,goal);
+            successor->h[1] = heuristic(successor,goal) + 100*my_heuristic(successor,goal);
             successor->f[1] = successor->g+successor->h[1];
             string Signature_action = find_signature_action(current,successor,representative_points,dX[i]);
             successor->signature = new_append_signature(current->signature,Signature_action);
@@ -234,8 +244,9 @@ int planner(double** map,string desired_signature, vector<Point2f> representativ
                 ad_open_map_of_states[Hash(successor)] = successor;
                 ad_open.push(successor);
               }
+              else delete successor;
             }
-
+            else delete successor;
           }
         }
       }
@@ -271,7 +282,7 @@ int planner(double** map,string desired_signature, vector<Point2f> representativ
               successor->g = current->g + cost(successor,current);
               successor->h[0] = heuristic(successor,goal);
               successor->f[0] = successor->g+successor->h[0];
-              successor->h[1] = 10*my_heuristic(successor,goal);
+              successor->h[1] = heuristic(successor,goal) + 100*my_heuristic(successor,goal);
               successor->f[1] = successor->g+successor->h[1];
               string Signature_action = find_signature_action(current,successor,representative_points,dX[i]);
               successor->signature = new_append_signature(current->signature,Signature_action);
@@ -308,8 +319,9 @@ int planner(double** map,string desired_signature, vector<Point2f> representativ
                   ad_open_map_of_states[Hash(successor)] = successor;
                   ad_open.push(successor);
                 }
+                else delete successor;
               }
-
+              else delete successor;
             }
           }
         }
