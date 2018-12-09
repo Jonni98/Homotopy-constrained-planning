@@ -41,163 +41,163 @@
 namespace homotopy_planner
 {
 
-  AStar::AStar(double*	map,
-                     int x_size,
-                     int y_size,
-                     double* armstart_anglesV_rad,
-                     double* armgoal_anglesV_rad) : DiscreteArmPlanner(map,
-                                                                       x_size,
-                                                                       y_size,
-                                                                       armstart_anglesV_rad,
-                                                                       armgoal_anglesV_rad)
-  {
-  }
+AStar::AStar(double*	map,
+                   int x_size,
+                   int y_size,
+                   double* armstart_anglesV_rad,
+                   double* armgoal_anglesV_rad) : DiscreteArmPlanner(map,
+                                                                     x_size,
+                                                                     y_size,
+                                                                     armstart_anglesV_rad,
+                                                                     armgoal_anglesV_rad)
+{
+}
 
 // The main recursive method to print all possible strings of length "length"
-  void AStar::permuteWithRepetition(const char *str,
-                                       std::string prefix,
-                                       const int n,
-                                       const int r,
-                                       std::vector<std::string> &perm_sequence)
+void AStar::permuteWithRepetition(const char *str,
+                                     std::string prefix,
+                                     const int n,
+                                     const int r,
+                                     std::vector<std::string> &perm_sequence)
+{
+  if (r == 1)
   {
-    if (r == 1)
+    for (int j = 0; j < n; j++)
     {
-      for (int j = 0; j < n; j++)
+      perm_sequence.push_back(prefix + str[j]);
+    }
+  }//Base case: r = 1, print the string "r" times + the remaining letter
+  else
+  {
+    // One by one add all characters from "str" and recursively call for "r" equals to "r"-1
+    for (int i = 0; i < n; i++)
+    {
+      // Next character of input added
+      permuteWithRepetition(str, prefix + str[i], n, r - 1, perm_sequence);
+      // "r" is decreased, because we have added a new character
+    }
+  }
+}
+
+std::vector<VertexPtr> AStar::getValidSuccessors(const VertexPtr& current_vertex)
+{
+  char sign[] = {'0', '1', '2'};
+  int n = sizeof sign;
+
+  std::vector<std::string> successor_sign;
+  permuteWithRepetition(sign, "", n, NUM_DOF, successor_sign);
+
+  std::vector<VertexPtr> successors;
+  for (int i=0; i<successor_sign.size(); ++i)
+  {
+    if (successor_sign[i] == "000")
+    {
+      continue;
+    }
+
+    ArmState successor_state;
+
+    for (int j=0; j<NUM_DOF; ++j)
+    {
+      switch (successor_sign[i][j])
       {
-        perm_sequence.push_back(prefix + str[j]);
+        case '0':
+          successor_state.q_[j] = current_vertex->state_.q_[j];
+          break;
+        case '1':
+          successor_state.q_[j] = normalize_angle_positive(current_vertex->state_.q_[j] +
+                                                       static_cast<int>(DISCRETIZATION*DOUBLE_TO_INT_FACTOR));
+          break;
+        case '2':
+          successor_state.q_[j] = normalize_angle_positive(current_vertex->state_.q_[j] -
+                                                       static_cast<int>(DISCRETIZATION*DOUBLE_TO_INT_FACTOR));
+          break;
       }
-    }//Base case: r = 1, print the string "r" times + the remaining letter
+    }
+
+    bool current_state_itself = true;
+    for (int j=0; j<NUM_DOF; ++j)
+    {
+      current_state_itself = current_state_itself &&
+                             (successor_state.q_[j] == current_vertex->state_.q_[j]);
+    }
+
+    if (current_state_itself)
+    {
+      continue;
+    }
+
+    if (!IsValidArmConfiguration(successor_state.q_, NUM_DOF, map_, x_size_, y_size_))
+    {
+      continue;
+    }
+
+    if (explored_.find(successor_state) == explored_.end())
+    {
+      VertexPtr successor =
+              std::make_shared<Vertex>(successor_state, std::numeric_limits<double>::infinity());
+      successors.push_back(successor);
+      explored_[successor_state] = successor;
+    }
     else
     {
-      // One by one add all characters from "str" and recursively call for "r" equals to "r"-1
-      for (int i = 0; i < n; i++)
-      {
-        // Next character of input added
-        permuteWithRepetition(str, prefix + str[i], n, r - 1, perm_sequence);
-        // "r" is decreased, because we have added a new character
-      }
+      successors.push_back(explored_[successor_state]);
     }
   }
 
-  std::vector<VertexPtr> AStar::getValidSuccessors(const VertexPtr& current_vertex)
-  {
-    char sign[] = {'0', '1', '2'};
-    int n = sizeof sign;
+  return successors;
+}
 
-    std::vector<std::string> successor_sign;
-    permuteWithRepetition(sign, "", n, NUM_DOF, successor_sign);
+bool AStar::getCost(const VertexPtr &current_vertex,
+                       const VertexPtr &successor,
+                       double& cost)
+{
+  cost = current_vertex->g_cost_ +
+         distanceBetweenVertices(current_vertex, successor);
+  return true;
+}
 
-    std::vector<VertexPtr> successors;
-    for (int i=0; i<successor_sign.size(); ++i)
-    {
-      if (successor_sign[i] == "000")
-      {
-        continue;
-      }
+bool AStar::run(ArmState& start_state,
+                   ArmState& goal_state)
+{
+  VertexPtr start_node;
+  start_node = std::make_shared<Vertex>(start_state, 0.0);
+  explored_[start_state] = start_node;
+  open_.insert(start_node);
+  open_.decreaseKey(start_node, 0.0);
 
-      ArmState successor_state;
-
-      for (int j=0; j<NUM_DOF; ++j)
-      {
-        switch (successor_sign[i][j])
-        {
-          case '0':
-            successor_state.q_[j] = current_vertex->state_.q_[j];
-            break;
-          case '1':
-            successor_state.q_[j] = normalize_angle_positive(current_vertex->state_.q_[j] +
-                                                         static_cast<int>(DISCRETIZATION*DOUBLE_TO_INT_FACTOR));
-            break;
-          case '2':
-            successor_state.q_[j] = normalize_angle_positive(current_vertex->state_.q_[j] -
-                                                         static_cast<int>(DISCRETIZATION*DOUBLE_TO_INT_FACTOR));
-            break;
-        }
-      }
-
-      bool current_state_itself = true;
-      for (int j=0; j<NUM_DOF; ++j)
-      {
-        current_state_itself = current_state_itself &&
-                               (successor_state.q_[j] == current_vertex->state_.q_[j]);
-      }
-
-      if (current_state_itself)
-      {
-        continue;
-      }
-
-      if (!IsValidArmConfiguration(successor_state.q_, NUM_DOF, map_, x_size_, y_size_))
-      {
-        continue;
-      }
-
-      if (explored_.find(successor_state) == explored_.end())
-      {
-        VertexPtr successor =
-                std::make_shared<Vertex>(successor_state, std::numeric_limits<double>::infinity());
-        successors.push_back(successor);
-        explored_[successor_state] = successor;
-      }
-      else
-      {
-        successors.push_back(explored_[successor_state]);
-      }
-    }
-
-    return successors;
-  }
-  
-  bool AStar::getCost(const VertexPtr &current_vertex,
-                         const VertexPtr &successor,
-                         double& cost)
-  {
-    cost = current_vertex->g_cost_ +
-           distanceBetweenVertices(current_vertex, successor);
-    return true;
-  }
-  
-  bool AStar::run(ArmState& start_state,
-                     ArmState& goal_state)
-  {
-    VertexPtr start_node;
-    start_node = std::make_shared<Vertex>(start_state, 0.0);
-    explored_[start_state] = start_node;
-    open_.insert(start_node);
-    open_.decreaseKey(start_node, 0.0);
-
-    bool goal_found = false;
+  bool goal_found = false;
 
 #if DEBUG
-    int num_expansions = 0;
+  int num_expansions = 0;
 
-    // Best soln in time
-    using namespace std::chrono;
-    typedef std::chrono::high_resolution_clock Clock;
-    auto start_time = Clock::now();
-    double time_limit = 25.0;
-    ArmState nearest_state = start_state;
-    double nearest_state_dist = std::numeric_limits<double>::infinity();
+  // Best soln in time
+  using namespace std::chrono;
+  typedef std::chrono::high_resolution_clock Clock;
+  auto start_time = Clock::now();
+  double time_limit = 25.0;
+  ArmState nearest_state = start_state;
+  double nearest_state_dist = std::numeric_limits<double>::infinity();
 
-    std::cout << "dist between start and goal: " << distanceBetweenVertices(start_state.q_, goal_state.q_) << std::endl;
+  std::cout << "dist between start and goal: " << distanceBetweenVertices(start_state.q_, goal_state.q_) << std::endl;
 
 #endif
 
-    while(open_.size() > 0)
+  while(open_.size() > 0)
+  {
+
+    VertexPtr least_cost_vertex =
+      std::static_pointer_cast<Vertex>(open_.remove());
+
+    closed_[least_cost_vertex->state_] = true;
+
+    if (closed_.find(goal_state) != closed_.end())
     {
-
-      VertexPtr least_cost_vertex =
-        std::static_pointer_cast<Vertex>(open_.remove());
-
-      closed_[least_cost_vertex->state_] = true;
-
-      if (closed_.find(goal_state) != closed_.end())
-      {
 //        std::cout << closed_[goal_state] << std::endl;
-        std::cout << "Goal node expanded. Terminating search!" << std::endl;
-        goal_found = true;
-        break;
-      }
+      std::cout << "Goal node expanded. Terminating search!" << std::endl;
+      goal_found = true;
+      break;
+    }
 
 //      if (closed_[goal_state])
 //      {
@@ -206,112 +206,112 @@ namespace homotopy_planner
 //      }
 
 #if DEBUG
-      ++num_expansions;
+    ++num_expansions;
 
-      if (distanceBetweenVertices(goal_state, least_cost_vertex->state_) < nearest_state_dist)
-      {
-        nearest_state = least_cost_vertex->state_;
-        nearest_state_dist = distanceBetweenVertices(goal_state, least_cost_vertex->state_);
-      }
+    if (distanceBetweenVertices(goal_state, least_cost_vertex->state_) < nearest_state_dist)
+    {
+      nearest_state = least_cost_vertex->state_;
+      nearest_state_dist = distanceBetweenVertices(goal_state, least_cost_vertex->state_);
+    }
 
-      auto end_time = Clock::now();
-      if (duration_cast<duration<double> >(end_time - start_time).count() > time_limit)
-      {
-        std::cout << "Exiting because time exceeded" << std::endl;
-        goal_state = nearest_state;
-        goal_found = true;
-        break;
-      }
+    auto end_time = Clock::now();
+    if (duration_cast<duration<double> >(end_time - start_time).count() > time_limit)
+    {
+      std::cout << "Exiting because time exceeded" << std::endl;
+      goal_state = nearest_state;
+      goal_found = true;
+      break;
+    }
 
 #endif
 
-      std::vector<VertexPtr> least_cost_vertex_successors =
-        getValidSuccessors(least_cost_vertex);
+    std::vector<VertexPtr> least_cost_vertex_successors =
+      getValidSuccessors(least_cost_vertex);
 
-      for(const VertexPtr &successor : least_cost_vertex_successors)
+    for(const VertexPtr &successor : least_cost_vertex_successors)
+    {
+      if(closed_.find(successor->state_) == closed_.end())
       {
-        if(closed_.find(successor->state_) == closed_.end())
+        double new_cost;
+        if (!getCost(least_cost_vertex, successor, new_cost))
         {
-          double new_cost;
-          if (!getCost(least_cost_vertex, successor, new_cost))
-          {
-            continue;
-          }
+          continue;
+        }
 
-          if (new_cost < successor->g_cost_)
-          {
-            successor->g_cost_ = new_cost;
-            successor->parent_ = least_cost_vertex;
+        if (new_cost < successor->g_cost_)
+        {
+          successor->g_cost_ = new_cost;
+          successor->parent_ = least_cost_vertex;
 #if DEBUG
-            successor->depth_ = least_cost_vertex->depth_+1;
+          successor->depth_ = least_cost_vertex->depth_+1;
 #endif
-            double f_cost = new_cost +
-                            HEURISTIC_INFLATION*distanceBetweenVertices(successor->state_, goal_state);
-            if (successor->heap_index_ == -1)
-            {
-              open_.insert(successor);
-              open_.decreaseKey(successor,
-                                f_cost);
-            }
-            else
-            {
-              open_.decreaseKey(successor,
-                                f_cost);
-            }
-
-
+          double f_cost = new_cost +
+                          HEURISTIC_INFLATION*distanceBetweenVertices(successor->state_, goal_state);
+          if (successor->heap_index_ == -1)
+          {
+            open_.insert(successor);
+            open_.decreaseKey(successor,
+                              f_cost);
           }
+          else
+          {
+            open_.decreaseKey(successor,
+                              f_cost);
+          }
+
+
         }
       }
     }
+  }
 
 #if DEBUG
-    std::cout << "Total number of expansions: " << num_expansions << std::endl;
+  std::cout << "Total number of expansions: " << num_expansions << std::endl;
 
-    if (open_.size() == 0)
+  if (open_.size() == 0)
+  {
+    std::cout << "Open list empty" << std::endl;
+    if (explored_.find(nearest_state) == explored_.end())
     {
-      std::cout << "Open list empty" << std::endl;
-      if (explored_.find(nearest_state) == explored_.end())
-      {
-        std::cout << "Nearest state not explored " << std::endl;
-      }
-      goal_state = nearest_state;
-      goal_found = true;
+      std::cout << "Nearest state not explored " << std::endl;
     }
+    goal_state = nearest_state;
+    goal_found = true;
+  }
 #endif
 
-    if (goal_found)
-    {
-      path_.clear();
-
-      path_.push_back(stateToVertex(goal_state));
-
-      VertexPtr backtrack_vertex = stateToVertex(goal_state);
-      while (backtrack_vertex->parent_)
-      {
-        backtrack_vertex = backtrack_vertex->parent_;
-        path_.push_back(backtrack_vertex);
-      }
-      std::reverse(path_.begin(), path_.end());
-    }
-    else
-    {
-      path_.push_back(start_node);
-      path_.push_back(stateToVertex(goal_state));
-    }
-    
-    return true;
-  }
-  
-  VertexPtr AStar::stateToVertex(ArmState &state)
+  if (goal_found)
   {
-    return explored_[state];
+    path_.clear();
+
+    path_.push_back(stateToVertex(goal_state));
+
+    VertexPtr backtrack_vertex = stateToVertex(goal_state);
+    while (backtrack_vertex->parent_)
+    {
+      backtrack_vertex = backtrack_vertex->parent_;
+      path_.push_back(backtrack_vertex);
+    }
+    std::reverse(path_.begin(), path_.end());
+  }
+  else
+  {
+    path_.push_back(start_node);
+    path_.push_back(stateToVertex(goal_state));
   }
 
-  std::vector<VertexPtr> AStar::getPath()
-  {
-    return path_;
-  }
+  return true;
+}
+
+VertexPtr AStar::stateToVertex(ArmState &state)
+{
+  return explored_[state];
+}
+
+std::vector<VertexPtr> AStar::getPath()
+{
+  return path_;
+}
 
 } // namespace homotopy_planner
 

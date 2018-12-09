@@ -32,7 +32,7 @@
  * \date   September 2018
  */
 
-#define DEBUG true
+#define DEBUG false
 
 #define NUM_DOF 5
 

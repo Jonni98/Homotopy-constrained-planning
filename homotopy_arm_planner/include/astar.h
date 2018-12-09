@@ -51,59 +51,54 @@
 namespace homotopy_planner
 {
   
-  class Environment;
-  class ForwardSearch;
-  
-  typedef std::chrono::high_resolution_clock Clock;
-  typedef std::shared_ptr<Environment> EnvironmentPtr;
-  typedef std::shared_ptr<ForwardSearch> ForwardSearchPtr;
-  
 
-  class AStar : public DiscreteArmPlanner
-  {
-  
-  public:
-    
-    AStar(double*	map,
-          int x_size,
-          int y_size,
-          double* armstart_anglesV_rad,
-          double* armgoal_anglesV_rad);
+typedef std::chrono::high_resolution_clock Clock;
 
-    void permuteWithRepetition(const char *str,
-                               std::string prefix,
-                               const int n,
-                               const int r,
-                               std::vector<std::string> &perm_sequence);
+class AStar : public DiscreteArmPlanner
+{
 
-    std::vector<VertexPtr> getValidSuccessors(const VertexPtr& current_vertex);
-    
-    bool getCost(const VertexPtr& current_vertex,
-                 const VertexPtr &successor,
-                 double& cost);
-    
-    bool run(ArmState& start_state, ArmState& goal_state);
+public:
 
-    VertexPtr stateToVertex(ArmState& state);
+  AStar(double*	map,
+        int x_size,
+        int y_size,
+        double* armstart_anglesV_rad,
+        double* armgoal_anglesV_rad);
 
-    std::vector<VertexPtr> getPath();
+  void permuteWithRepetition(const char *str,
+                             std::string prefix,
+                             const int n,
+                             const int r,
+                             std::vector<std::string> &perm_sequence);
 
-  private:
+  std::vector<VertexPtr> getValidSuccessors(const VertexPtr& current_vertex);
 
-    PriorityQueue open_;
-    
-    std::unordered_map<ArmState,
-                       bool,
-                       std::hash<ArmState>,
-                       ArmStateEqual> closed_;
+  bool getCost(const VertexPtr& current_vertex,
+               const VertexPtr &successor,
+               double& cost);
 
-    std::unordered_map<ArmState,
-                       VertexPtr,
-                       std::hash<ArmState>,
-                       ArmStateEqual> explored_;
+  bool run(ArmState& start_state, ArmState& goal_state);
 
-    std::vector<VertexPtr> path_;
-  };
+  VertexPtr stateToVertex(ArmState& state);
+
+  std::vector<VertexPtr> getPath();
+
+private:
+
+  PriorityQueue open_;
+
+  std::unordered_map<ArmState,
+                     bool,
+                     std::hash<ArmState>,
+                     ArmStateEqual> closed_;
+
+  std::unordered_map<ArmState,
+                     VertexPtr,
+                     std::hash<ArmState>,
+                     ArmStateEqual> explored_;
+
+  std::vector<VertexPtr> path_;
+};
   
 
 } // namespace homotopy_planner
