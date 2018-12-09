@@ -96,7 +96,7 @@ namespace homotopy_planner
                        bool,
                        std::hash<ArmState>,
                        ArmStateEqual> closed_;
-    
+
     std::unordered_map<ArmState,
                        VertexPtr,
                        std::hash<ArmState>,
@@ -106,23 +106,5 @@ namespace homotopy_planner
   };
   
 
-//  class ForwardSearch
-//  {
-//  public:
-//
-//    ForwardSearch(int robot_pose_x,
-//                  int robot_pose_y,
-//                  EnvironmentPtr& environment_ptr);
-//
-//    bool run();
-//
-////  private:
-//
-//    int robot_pose_x_;
-//    int robot_pose_y_;
-//
-//    Dijkstra planner_;
-//  };
-  
 } // namespace homotopy_planner
 

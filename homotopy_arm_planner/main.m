@@ -1,12 +1,12 @@
 clear
 clc
 
-startQ = [pi/2 pi/4 pi/2];
-% startQ = [pi/2 pi/4 pi/2 pi/4 pi/2];
+% startQ = [pi/2 pi/4 pi/2];
+startQ = [pi/2 pi/4 pi/2 pi/4 pi/2];
 % startQ = [pi/4 0 pi/2 pi/4 pi/2];
 % goalQ = [pi/2 pi/2 pi/2 pi/2 pi/2];
-goalQ = [pi/8 3*pi/4 pi];
-% goalQ = [pi/8 3*pi/4 pi 0.9*pi 1.5*pi];
+% goalQ = [pi/8 3*pi/4 pi];
+goalQ = [pi/8 3*pi/4 pi 0.9*pi 1.5*pi];
 % goalQ = [pi/4 0 pi/2 pi/4 pi/2];
 
 % Shohin's examples

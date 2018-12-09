@@ -34,7 +34,7 @@
 
 #define DEBUG true
 
-#define NUM_DOF 3
+#define NUM_DOF 5
 
 #define MIN_JOINT_ANGLE 0
 #define MAX_JOINT_ANGLE 2*M_PI
@@ -43,5 +43,7 @@
 #define EXTEND_EPSILON 0.5
 #define DISCRETIZATION 0.1
 #define DOUBLE_TO_INT_FACTOR 1E4
+
+#define HEURISTIC_INFLATION 5
 
 #define AVOID_SELF_COLLISION false

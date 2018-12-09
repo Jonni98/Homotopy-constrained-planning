@@ -107,7 +107,6 @@ static void generatePlan(std::vector<homotopy_planner::VertexPtr>& path,
     (*plan)[i] = (double*) malloc(numofDOFs*sizeof(double));
     for(int j = 0; j < numofDOFs; j++)
       {
-      std::cout << static_cast<double>(path[i]->state_.q_[j])/DOUBLE_TO_INT_FACTOR << std::endl;
       (*plan)[i][j] = static_cast<double>(path[i]->state_.q_[j])/DOUBLE_TO_INT_FACTOR;
       }
     }
@@ -196,14 +195,16 @@ void mexFunction( int nlhs, mxArray *plhs[],
 
   std::vector<homotopy_planner::VertexPtr> path = planner.getPath();
 
-    for (int i=0; i<path.size(); ++i)
-    {
-      for (int j=0; j<numofDOFs; ++j)
-      {
-        std::cout << path[i]->state_.q_[j] << "\t";
-      }
-      std::cout << path[i]->depth_ << std::endl;
-    }
+#if DEBUG
+//    for (int i=0; i<path.size(); ++i)
+//    {
+//      for (int j=0; j<numofDOFs; ++j)
+//      {
+//        std::cout << path[i]->state_.q_[j] << "\t";
+//      }
+//      std::cout << path[i]->depth_ << std::endl;
+//    }
+#endif
 
   std::cout << "planner returned plan of length = " << path.size() << std::endl;
 

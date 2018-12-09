@@ -64,7 +64,6 @@ namespace homotopy_planner
     {
       for (int j = 0; j < n; j++)
       {
-        // std::cout << prefix + str[j] << std::endl;
         perm_sequence.push_back(prefix + str[j]);
       }
     }//Base case: r = 1, print the string "r" times + the remaining letter
@@ -91,47 +90,42 @@ namespace homotopy_planner
     std::vector<VertexPtr> successors;
     for (int i=0; i<successor_sign.size(); ++i)
     {
-      bool current_state_itself = true;
-      for (int j=0; j<NUM_DOF; ++j)
-      {
-        if(successor_sign[i][j]  != '0')
-        {
-          current_state_itself = false;
-          break;
-        }
-      }
-      if (current_state_itself)
+      if (successor_sign[i] == "000")
       {
         continue;
       }
 
-      ArmState successor_state = current_vertex->state_;
+      ArmState successor_state;
+
       for (int j=0; j<NUM_DOF; ++j)
       {
         switch (successor_sign[i][j])
         {
           case '0':
             successor_state.q_[j] = current_vertex->state_.q_[j];
+            break;
           case '1':
-            successor_state.q_[j] = normalize_angle_positive(successor_state.q_[j] +
+            successor_state.q_[j] = normalize_angle_positive(current_vertex->state_.q_[j] +
                                                          static_cast<int>(DISCRETIZATION*DOUBLE_TO_INT_FACTOR));
+            break;
           case '2':
-            successor_state.q_[j] = normalize_angle_positive(successor_state.q_[j] -
+            successor_state.q_[j] = normalize_angle_positive(current_vertex->state_.q_[j] -
                                                          static_cast<int>(DISCRETIZATION*DOUBLE_TO_INT_FACTOR));
+            break;
         }
       }
 
-//      current_state_itself = true;
-//      for (int j=0; j<NUM_DOF; ++j)
-//      {
-//        current_state_itself = current_state_itself &&
-//                               (successor_state.q_[j] == current_vertex->state_.q_[j]);
-//      }
-//
-//      if (current_state_itself)
-//      {
-//        continue;
-//      }
+      bool current_state_itself = true;
+      for (int j=0; j<NUM_DOF; ++j)
+      {
+        current_state_itself = current_state_itself &&
+                               (successor_state.q_[j] == current_vertex->state_.q_[j]);
+      }
+
+      if (current_state_itself)
+      {
+        continue;
+      }
 
       if (!IsValidArmConfiguration(successor_state.q_, NUM_DOF, map_, x_size_, y_size_))
       {
@@ -141,7 +135,7 @@ namespace homotopy_planner
       if (explored_.find(successor_state) == explored_.end())
       {
         VertexPtr successor =
-                std::make_shared<Vertex>(successor_state);
+                std::make_shared<Vertex>(successor_state, std::numeric_limits<double>::infinity());
         successors.push_back(successor);
         explored_[successor_state] = successor;
       }
@@ -158,7 +152,7 @@ namespace homotopy_planner
                          const VertexPtr &successor,
                          double& cost)
   {
-    cost = current_vertex->key_ +
+    cost = current_vertex->g_cost_ +
            distanceBetweenVertices(current_vertex, successor);
     return true;
   }
@@ -167,7 +161,7 @@ namespace homotopy_planner
                      ArmState& goal_state)
   {
     VertexPtr start_node;
-    start_node = std::make_shared<Vertex>(start_state);
+    start_node = std::make_shared<Vertex>(start_state, 0.0);
     explored_[start_state] = start_node;
     open_.insert(start_node);
     open_.decreaseKey(start_node, 0.0);
@@ -181,7 +175,7 @@ namespace homotopy_planner
     using namespace std::chrono;
     typedef std::chrono::high_resolution_clock Clock;
     auto start_time = Clock::now();
-    double time_limit = 250.0;
+    double time_limit = 25.0;
     ArmState nearest_state = start_state;
     double nearest_state_dist = std::numeric_limits<double>::infinity();
 
@@ -197,23 +191,23 @@ namespace homotopy_planner
 
       closed_[least_cost_vertex->state_] = true;
 
-      if (closed_[goal_state])
+      if (closed_.find(goal_state) != closed_.end())
       {
+//        std::cout << closed_[goal_state] << std::endl;
         std::cout << "Goal node expanded. Terminating search!" << std::endl;
         goal_found = true;
         break;
       }
 
+//      if (closed_[goal_state])
+//      {
+//        std::cout << "Goal node expanded. Terminating search!" << std::endl;
+//        break;
+//      }
 
 #if DEBUG
       ++num_expansions;
 
-//      while (explored_.find(nearest_state) == explored_.end())
-//      {
-//        std::cout << "nearest is null" << std::endl;
-//      }
-//      std::cout << "dist: " << distanceBetweenVertices(goal_state, least_cost_vertex->state_)
-//                << " depth: " << least_cost_vertex->depth_ << std::endl;
       if (distanceBetweenVertices(goal_state, least_cost_vertex->state_) < nearest_state_dist)
       {
         nearest_state = least_cost_vertex->state_;
@@ -244,13 +238,15 @@ namespace homotopy_planner
             continue;
           }
 
-          if (new_cost < successor->key_)
+          if (new_cost < successor->g_cost_)
           {
+            successor->g_cost_ = new_cost;
             successor->parent_ = least_cost_vertex;
 #if DEBUG
             successor->depth_ = least_cost_vertex->depth_+1;
 #endif
-            double f_cost = new_cost + distanceBetweenVertices(successor->state_, goal_state);
+            double f_cost = new_cost +
+                            HEURISTIC_INFLATION*distanceBetweenVertices(successor->state_, goal_state);
             if (successor->heap_index_ == -1)
             {
               open_.insert(successor);
@@ -271,14 +267,18 @@ namespace homotopy_planner
 
 #if DEBUG
     std::cout << "Total number of expansions: " << num_expansions << std::endl;
-#endif
 
     if (open_.size() == 0)
     {
       std::cout << "Open list empty" << std::endl;
+      if (explored_.find(nearest_state) == explored_.end())
+      {
+        std::cout << "Nearest state not explored " << std::endl;
+      }
       goal_state = nearest_state;
       goal_found = true;
     }
+#endif
 
     if (goal_found)
     {
@@ -287,7 +287,7 @@ namespace homotopy_planner
       path_.push_back(stateToVertex(goal_state));
 
       VertexPtr backtrack_vertex = stateToVertex(goal_state);
-      while (backtrack_vertex->parent_ != nullptr)
+      while (backtrack_vertex->parent_)
       {
         backtrack_vertex = backtrack_vertex->parent_;
         path_.push_back(backtrack_vertex);
@@ -312,35 +312,6 @@ namespace homotopy_planner
   {
     return path_;
   }
-
-//  ForwardSearch::ForwardSearch(int robot_pose_x,
-//                               int robot_pose_y,
-//                               EnvironmentPtr& environment_ptr) : robot_pose_x_(robot_pose_x),
-//                                                                  robot_pose_y_(robot_pose_y),
-//                                                                  planner_(environment_ptr)
-//  {
-//  }
-//
-//  bool ForwardSearch::run()
-//  {
-//    std::vector<State2DPtr> start_state;
-//
-//    start_state.emplace_back(new State2D(robot_pose_x_,
-//                                         robot_pose_y_));
-//
-//    using namespace std::chrono;
-//
-//    auto start_time = Clock::now();
-//    if (planner_.run(start_state, true))
-//      {
-//      auto end_time = Clock::now();
-//      std::cout << "Forward search time: "
-//                << duration_cast<duration<double> >(end_time - start_time).count() << "s" << std::endl;
-//      return true;
-//      }
-//
-//    return false;
-//  }
 
 } // namespace homotopy_planner
 

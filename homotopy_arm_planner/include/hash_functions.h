@@ -60,9 +60,19 @@ typedef std::shared_ptr<Vertex> VertexPtr;
 // FIXME That was actually the main purpose of seprating out Vertex from the ArmState.
 struct ArmState
 {
-  ArmState(int* joint_angles) : q_(joint_angles)
+  ArmState() : q_(new int[NUM_DOF])
   {
   }
+
+  ArmState(int* joint_angles) : q_(new int[NUM_DOF])
+  {
+    std::copy(joint_angles, joint_angles + static_cast<int>(NUM_DOF), q_);
+  }
+
+//  ArmState(const ArmState &state) : q_(new int[NUM_DOF])
+//  {
+//    memcpy(q_, state.q_, static_cast<size_t>(NUM_DOF));
+//  }
 
   int* q_;
 };
@@ -82,10 +92,10 @@ struct ArmStateEqual
 
 struct Vertex : public PriorityQueue::Element
 {
-  Vertex(ArmState state, double cost=0.0) : state_(state),
-                                            cost_(cost),
-                                            parent_(nullptr),
-                                            depth_(0)
+  Vertex(ArmState state, double g_cost=0.0) : state_(state),
+                                              g_cost_(g_cost),
+                                              parent_(nullptr),
+                                              depth_(0)
   {
     key_ = std::numeric_limits<double>::infinity();
   }
@@ -96,7 +106,7 @@ struct Vertex : public PriorityQueue::Element
 
   int depth_;
 
-  double cost_;
+  double g_cost_;
 
   VertexPtr parent_;
 
@@ -113,21 +123,18 @@ namespace std
   {
     std::size_t operator()(const homotopy_planner::ArmState &state) const
     {
-//      std::size_t hash=0;
-//      for (int i=0; i<NUM_DOF; ++i)
-//      {
-//        boost::hash_combine(hash, state.q_[i]);
-//      }
+      std::size_t hash=0;
+      for (int i=0; i<NUM_DOF; ++i)
+      {
+        boost::hash_combine(hash, state.q_[i]);
+      }
 #if DEBUG
 //      std::cout<< "hash: " << hash<<std::endl;
 #endif
-//      return hash;
+      return hash;
 
-      return static_cast<std::size_t>((73856093 * state.q_[0]) ^
-                                      (19349663 * state.q_[1]) ^
-                                      (2654435761 * state.q_[2]));
-//      return static_cast<std::size_t>((73856093 * state.q_[0]) *
-//                                      (19349663 * state.q_[1]) *
+//      return static_cast<std::size_t>((73856093 * state.q_[0]) ^
+//                                      (19349663 * state.q_[1]) ^
 //                                      (2654435761 * state.q_[2]));
     }
   };
