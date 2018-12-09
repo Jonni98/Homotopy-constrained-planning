@@ -19,7 +19,7 @@
 
 
 #include <config.h>
-#include <dijkstra.h>
+#include <astar.h>
 
 static void planner(
 		   double*	map,
@@ -165,7 +165,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
     int planlength = 0;
 
 
-    homotopy_planner::Dijkstra planner(map, x_size, y_size, armstart_anglesV_rad, armgoal_anglesV_rad);
+    homotopy_planner::AStar planner(map, x_size, y_size, armstart_anglesV_rad, armgoal_anglesV_rad);
 
     int* start_q = new int[NUM_DOF];
     int* goal_q = new int[NUM_DOF];

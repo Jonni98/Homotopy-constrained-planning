@@ -27,7 +27,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*!
- * \file   dijkstra_basic.h
+ * \file   astar.h
  * \author Ramkumar Natarajan (rnataraj@cs.cmu.com)
  * \date   September 2018
  */
@@ -59,16 +59,16 @@ namespace homotopy_planner
   typedef std::shared_ptr<ForwardSearch> ForwardSearchPtr;
   
 
-  class Dijkstra : public DiscreteArmPlanner
+  class AStar : public DiscreteArmPlanner
   {
   
   public:
     
-    Dijkstra(double*	map,
-             int x_size,
-             int y_size,
-             double* armstart_anglesV_rad,
-             double* armgoal_anglesV_rad);
+    AStar(double*	map,
+          int x_size,
+          int y_size,
+          double* armstart_anglesV_rad,
+          double* armgoal_anglesV_rad);
 
     void permuteWithRepetition(const char *str,
                                std::string prefix,

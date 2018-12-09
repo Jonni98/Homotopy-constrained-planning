@@ -8,12 +8,12 @@ include_directories(include
 #Can manually add the sources using the set command as follows:
 
 set(INCLUDES include/discrete_arm_planner.h
-             include/dijkstra.h
+        include/astar.h
              include/hash_functions.h
              include/heap.h
              include/config.h
              include/macros.h)
-set(SOURCES planner.cpp src/dijkstra.cpp src/discrete_arm_planner.cpp)
+set(SOURCES planner.cpp src/astar.cpp src/discrete_arm_planner.cpp)
 
 #Generate the shared library from the sources
 add_library(hw_1 SHARED

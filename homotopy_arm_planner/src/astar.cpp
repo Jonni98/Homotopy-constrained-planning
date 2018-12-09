@@ -27,13 +27,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*!
- * \file   dijkstra_basic.cpp
+ * \file   astar.cpp
  * \author Ramkumar Natarajan (rnataraj@cs.cmu.com)
  * \date   September 2018
  */
 
 // Project
-#include <dijkstra.h>
+#include <astar.h>
 
 // STL
 #include <algorithm>
@@ -41,7 +41,7 @@
 namespace homotopy_planner
 {
 
-  Dijkstra::Dijkstra(double*	map,
+  AStar::AStar(double*	map,
                      int x_size,
                      int y_size,
                      double* armstart_anglesV_rad,
@@ -54,7 +54,7 @@ namespace homotopy_planner
   }
 
 // The main recursive method to print all possible strings of length "length"
-  void Dijkstra::permuteWithRepetition(const char *str,
+  void AStar::permuteWithRepetition(const char *str,
                                        std::string prefix,
                                        const int n,
                                        const int r,
@@ -79,7 +79,7 @@ namespace homotopy_planner
     }
   }
 
-  std::vector<VertexPtr> Dijkstra::getValidSuccessors(const VertexPtr& current_vertex)
+  std::vector<VertexPtr> AStar::getValidSuccessors(const VertexPtr& current_vertex)
   {
     char sign[] = {'0', '1', '2'};
     int n = sizeof sign;
@@ -148,7 +148,7 @@ namespace homotopy_planner
     return successors;
   }
   
-  bool Dijkstra::getCost(const VertexPtr &current_vertex,
+  bool AStar::getCost(const VertexPtr &current_vertex,
                          const VertexPtr &successor,
                          double& cost)
   {
@@ -157,7 +157,7 @@ namespace homotopy_planner
     return true;
   }
   
-  bool Dijkstra::run(ArmState& start_state,
+  bool AStar::run(ArmState& start_state,
                      ArmState& goal_state)
   {
     VertexPtr start_node;
@@ -303,12 +303,12 @@ namespace homotopy_planner
     return true;
   }
   
-  VertexPtr Dijkstra::stateToVertex(ArmState &state)
+  VertexPtr AStar::stateToVertex(ArmState &state)
   {
     return explored_[state];
   }
 
-  std::vector<VertexPtr> Dijkstra::getPath()
+  std::vector<VertexPtr> AStar::getPath()
   {
     return path_;
   }

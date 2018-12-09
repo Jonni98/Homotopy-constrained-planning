@@ -46,4 +46,4 @@
 
 #define HEURISTIC_INFLATION 5
 
-#define AVOID_SELF_COLLISION false
+#define AVOID_SELF_COLLISION true

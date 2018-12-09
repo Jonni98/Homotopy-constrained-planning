@@ -85,15 +85,6 @@ public:
 
   double normalize_angle_positive(double angle) const;
 
-  void sampleRandomState(ArmState& random_state);
-
-//  bool extend(const VertexPtr& current_vertex,
-//              const ArmState& random_state,
-//              VertexPtr new_vertex) const;
-
-//  bool isObstacleFree(const VertexPtr& vertex_1,
-//                      const VertexPtr& vertex_2) const;
-
   virtual double distanceBetweenVertices(const VertexPtr& vertex_1,
                                          const VertexPtr& vertex_2) const;
 
