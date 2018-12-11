@@ -48,6 +48,7 @@
 #include <config.h>
 #include <macros.h>
 #include <hash_functions.h>
+#include <h_signature.h>
 
 namespace homotopy_planner
 {

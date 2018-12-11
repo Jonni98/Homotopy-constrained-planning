@@ -2,11 +2,12 @@ clear
 clc
 
 % startQ = [pi/2 pi/4 pi/2];
-startQ = [pi/2 pi/4 pi/2 pi/4 pi/2];
-% startQ = [pi/4 0 pi/2 pi/4 pi/2];
+% startQ = [pi/2 pi/4 pi/2 pi/4 pi/2];
+% startQ = [pi/2 pi/2 pi/2 pi/2 pi/2];
+startQ = [pi/4 pi/2 pi/2 pi/2 pi/4];
 % goalQ = [pi/2 pi/2 pi/2 pi/2 pi/2];
 % goalQ = [pi/8 3*pi/4 pi];
-goalQ = [pi/8 3*pi/4 pi 0.9*pi 1.5*pi];
+goalQ = [pi/9 3*pi/4 pi 0.9*pi 1.5*pi];
 % goalQ = [pi/4 0 pi/2 pi/4 pi/2];
 
 % Shohin's examples
@@ -16,5 +17,5 @@ goalQ = [pi/8 3*pi/4 pi 0.9*pi 1.5*pi];
 % goalQ = [1.40824 2.18801 0.963804 5.08073 2.00193];
 
 
-runtest('map1.txt', startQ, goalQ, 2)
+runtest('map4.txt', startQ, goalQ, 2)
 % runtest('map2.txt', startQ, goalQ, 0)

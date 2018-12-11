@@ -87,6 +87,10 @@ public:
 
 private:
 
+  HSignature h_sign_;
+
+  std::vector<std::string> signatures_;
+
   PriorityQueue open_;
 
   std::unordered_map<ArmState,

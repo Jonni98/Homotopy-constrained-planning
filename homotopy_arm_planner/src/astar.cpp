@@ -42,15 +42,17 @@ namespace homotopy_planner
 {
 
 AStar::AStar(double*	map,
-                   int x_size,
-                   int y_size,
-                   double* armstart_anglesV_rad,
-                   double* armgoal_anglesV_rad) : DiscreteArmPlanner(map,
-                                                                     x_size,
-                                                                     y_size,
-                                                                     armstart_anglesV_rad,
-                                                                     armgoal_anglesV_rad)
+             int x_size,
+             int y_size,
+             double* armstart_anglesV_rad,
+             double* armgoal_anglesV_rad) : DiscreteArmPlanner(map,
+                                                               x_size,
+                                                               y_size,
+                                                               armstart_anglesV_rad,
+                                                               armgoal_anglesV_rad)
 {
+  std::vector<cv::Point2f> representative_points = h_sign_.findRepresentativePoints(x_size, y_size, map);
+  signatures_ = h_sign_.generateSignatures(representative_points);
 }
 
 // The main recursive method to print all possible strings of length "length"

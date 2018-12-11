@@ -53,6 +53,27 @@ static void generatePlan(std::vector<homotopy_planner::VertexPtr>& path,
   return;
 }
 
+void assignDefaultOutput(mxArray *plhs[], double* start_q, int numofDOFs)
+{
+  PLAN_OUT = mxCreateNumericMatrix( (mwSize)1, (mwSize)numofDOFs, mxDOUBLE_CLASS, mxREAL);
+  PLAN_ENDEFFECTOR_OUT = mxCreateNumericMatrix( (mwSize)1, (mwSize)2, mxDOUBLE_CLASS, mxREAL);
+  double* plan_out = mxGetPr(PLAN_OUT);
+  double* plan_endeffector_out = mxGetPr(PLAN_ENDEFFECTOR_OUT);
+  //copy the values
+  int i,j;
+  for (j = 0; j < numofDOFs; j++)
+  {
+    plan_out[j] = start_q[j];
+  }
+  for (j = 0; j < 2; j++)
+  {
+    plan_endeffector_out[j] = 0.0;
+  }
+  PLANLENGTH_OUT = mxCreateNumericMatrix( (mwSize)1, (mwSize)1, mxINT8_CLASS, mxREAL);
+  int* planlength_out = (int*) mxGetPr(PLANLENGTH_OUT);
+  *planlength_out = 2;
+}
+
 //prhs contains input parameters (3): 
 //1st is matrix with all the obstacles
 //2nd is a row vector of start angles for the arm 
@@ -118,10 +139,18 @@ void mexFunction( int nlhs, mxArray *plhs[],
     homotopy_planner::ArmState start_state(start_q);
     homotopy_planner::ArmState goal_state(goal_q);
 
-    if (!planner.IsValidArmConfiguration(start_q, NUM_DOF, map, x_size, y_size) ||
-        !planner.IsValidArmConfiguration(goal_q, NUM_DOF, map, x_size, y_size))
+    if (!planner.IsValidArmConfiguration(start_q, NUM_DOF, map, x_size, y_size))
     {
-      std::cout << "Start or goal in collision! Exiting" << std::endl;
+      std::cout << "Start in collision! Exiting" << std::endl;
+      assignDefaultOutput(plhs, armstart_anglesV_rad, numofDOFs);
+      return;
+    }
+
+    if (!planner.IsValidArmConfiguration(goal_q, NUM_DOF, map, x_size, y_size))
+    {
+      std::cout << "Goal in collision! Exiting" << std::endl;
+      assignDefaultOutput(plhs, armstart_anglesV_rad, numofDOFs);
+      return;
     }
 
     using namespace std::chrono;
