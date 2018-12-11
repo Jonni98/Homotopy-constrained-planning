@@ -313,6 +313,18 @@ std::vector<VertexPtr> AStar::getPath()
   return path_;
 }
 
+std::vector<DiscreteArmPlanner::Point2D> AStar::getEndEffectorPath()
+{
+  end_effector_path_.clear();
+  for (const auto& configuration : path_)
+  {
+    Point2D end_effector_pose = getEndEffectorPose(configuration->state_.q_,
+                                                   NUM_DOF);
+    end_effector_path_.push_back(end_effector_pose);
+  }
+  return end_effector_path_;
+}
+
 } // namespace homotopy_planner
 
 

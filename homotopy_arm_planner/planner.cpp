@@ -15,100 +15,40 @@
 
 /* Output Arguments */
 #define	PLAN_OUT	plhs[0]
-#define	PLANLENGTH_OUT	plhs[1]
+#define	PLAN_ENDEFFECTOR_OUT	plhs[1]
+#define	PLANLENGTH_OUT	plhs[2]
 
 
 #include <config.h>
 #include <astar.h>
 
-static void planner(
-		   double*	map,
-		   int x_size,
- 		   int y_size,
-           double* armstart_anglesV_rad,
-           double* armgoal_anglesV_rad,
-	   int numofDOFs,
-	   double*** plan,
-	   int* planlength)
-{
-// 	no plan by default
-	*plan = NULL;
-	*planlength = 0;
-
-   //for now just do straight interpolation between start and goal checking for the validity of samples
-
-   double distance = 0;
-   int i,j;
-   for (j = 0; j < numofDOFs; j++){
-       if(distance < fabs(armstart_anglesV_rad[j] - armgoal_anglesV_rad[j]))
-           distance = fabs(armstart_anglesV_rad[j] - armgoal_anglesV_rad[j]);
-   }
-   int numofsamples = (int)(distance/(PI/20));
-   if(numofsamples < 2){
-       printf("the arm is already at the goal\n");
-       return;
-   }
-   *plan = (double**) malloc(numofsamples*sizeof(double*));
-   int firstinvalidconf = 1;
-   for (i = 0; i < numofsamples; i++){
-       (*plan)[i] = (double*) malloc(numofDOFs*sizeof(double));
-       for(j = 0; j < numofDOFs; j++){
-           (*plan)[i][j] = armstart_anglesV_rad[j] + ((double)(i)/(numofsamples-1))*(armgoal_anglesV_rad[j] - armstart_anglesV_rad[j]);
-       }
-//        if(!IsValidArmConfiguration((*plan)[i], numofDOFs, map, x_size, y_size) && firstinvalidconf)
-       if (false)
-       {
-           firstinvalidconf = 1;
-           printf("ERROR: Invalid arm configuration!!!\n");
-       }
-   }
-   *planlength = numofsamples;
-
-   return;
-}
-
-//static void generatePlan(std::vector<hw_2::VertexPtr>& path,
-//                         int numofDOFs,
-//                         double*** plan,
-//                         int* planlength)
-//{
-//// 	no plan by default
-//  *plan = NULL;
-//  *planlength = 0;
-//
-//  *planlength = static_cast<int>(path.size());
-//
-//  *plan = (double**) malloc((*planlength)*sizeof(double*));
-//  for (int i = 0; i < (*planlength); i++)
-//    {
-//    (*plan)[i] = (double*) malloc(numofDOFs*sizeof(double));
-//    for(int j = 0; j < numofDOFs; j++)
-//      {
-//      (*plan)[i][j] = path[i]->state_.q_[j];
-//      }
-//    }
-//  return;
-//}
 
 static void generatePlan(std::vector<homotopy_planner::VertexPtr>& path,
+                         std::vector<homotopy_planner::DiscreteArmPlanner::Point2D>& end_effector_path,
                          int numofDOFs,
                          double*** plan,
+                         double*** plan_endeffector,
                          int* planlength)
 {
 // 	no plan by default
   *plan = NULL;
+  *plan_endeffector = NULL;
   *planlength = 0;
 
   *planlength = static_cast<int>(path.size());
 
   *plan = (double**) malloc((*planlength)*sizeof(double*));
+  *plan_endeffector = (double**) malloc((*planlength)*sizeof(double*));
   for (int i = 0; i < (*planlength); i++)
     {
     (*plan)[i] = (double*) malloc(numofDOFs*sizeof(double));
+    (*plan_endeffector)[i] = (double*) malloc(2*sizeof(double));
     for(int j = 0; j < numofDOFs; j++)
       {
       (*plan)[i][j] = static_cast<double>(path[i]->state_.q_[j])/DOUBLE_TO_INT_FACTOR;
       }
+      (*plan_endeffector)[i][0] = end_effector_path[i].x_;
+      (*plan_endeffector)[i][1] = end_effector_path[i].y_;
     }
   return;
 }
@@ -130,7 +70,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
     if (nrhs != 4) { 
 	    mexErrMsgIdAndTxt( "MATLAB:planner:invalidNumInputs",
                 "Four input arguments required."); 
-    } else if (nlhs != 2) {
+    } else if (nlhs != 3) {
 	    mexErrMsgIdAndTxt( "MATLAB:planner:maxlhs",
                 "One output argument required."); 
     } 
@@ -162,6 +102,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
     
     //call the planner
     double** plan = NULL;
+    double** plan_endeffector = NULL;
     int planlength = 0;
 
 
@@ -194,6 +135,7 @@ void mexFunction( int nlhs, mxArray *plhs[],
     }
 
   std::vector<homotopy_planner::VertexPtr> path = planner.getPath();
+  std::vector<homotopy_planner::DiscreteArmPlanner::Point2D> end_effector_path = planner.getEndEffectorPath();
 
 #if DEBUG
 //    for (int i=0; i<path.size(); ++i)
@@ -208,13 +150,20 @@ void mexFunction( int nlhs, mxArray *plhs[],
 
   std::cout << "planner returned plan of length = " << path.size() << std::endl;
 
-  generatePlan(path, numofDOFs, &plan, &planlength);
+  generatePlan(path,
+               end_effector_path,
+               numofDOFs,
+               &plan,
+               &plan_endeffector,
+               &planlength);
 
     /* Create return values */
     if(planlength > 0)
     {
-        PLAN_OUT = mxCreateNumericMatrix( (mwSize)planlength, (mwSize)numofDOFs, mxDOUBLE_CLASS, mxREAL); 
-        double* plan_out = mxGetPr(PLAN_OUT);        
+        PLAN_OUT = mxCreateNumericMatrix( (mwSize)planlength, (mwSize)numofDOFs, mxDOUBLE_CLASS, mxREAL);
+        PLAN_ENDEFFECTOR_OUT = mxCreateNumericMatrix( (mwSize)planlength, (mwSize)2, mxDOUBLE_CLASS, mxREAL);
+        double* plan_out = mxGetPr(PLAN_OUT);
+        double* plan_endeffector_out = mxGetPr(PLAN_ENDEFFECTOR_OUT);
         //copy the values
         int i,j;
         for(i = 0; i < planlength; i++)
@@ -223,18 +172,28 @@ void mexFunction( int nlhs, mxArray *plhs[],
             {
                 plan_out[j*planlength + i] = plan[i][j];
             }
+            for (j = 0; j < 2; j++)
+            {
+              plan_endeffector_out[j*planlength + i] = plan_endeffector[i][j];
+            }
         }
     }
     else
     {
-        PLAN_OUT = mxCreateNumericMatrix( (mwSize)1, (mwSize)numofDOFs, mxDOUBLE_CLASS, mxREAL); 
+        PLAN_OUT = mxCreateNumericMatrix( (mwSize)2, (mwSize)numofDOFs, mxDOUBLE_CLASS, mxREAL);
+        PLAN_ENDEFFECTOR_OUT = mxCreateNumericMatrix( (mwSize)1, (mwSize)2, mxDOUBLE_CLASS, mxREAL);
         double* plan_out = mxGetPr(PLAN_OUT);
+        double* plan_endeffector_out = mxGetPr(PLAN_ENDEFFECTOR_OUT);
         //copy the values
         int j;
         for(j = 0; j < numofDOFs; j++)
         {
                 plan_out[j] = armstart_anglesV_rad[j];
-        }     
+        }
+        plan_endeffector_out[0] = 0.0;
+        plan_endeffector_out[1] = 0.0;
+        plan_endeffector_out[2] = 0.0;
+        plan_endeffector_out[3] = 0.0;
     }
     PLANLENGTH_OUT = mxCreateNumericMatrix( (mwSize)1, (mwSize)1, mxINT8_CLASS, mxREAL); 
     int* planlength_out = (int*) mxGetPr(PLANLENGTH_OUT);

@@ -67,6 +67,12 @@ public:
     int Flipped;
   } bresenham_param_t;
 
+  struct Point2D
+  {
+    double x_;
+    double y_;
+  };
+
   DiscreteArmPlanner(double*	map,
                      int x_size,
                      int y_size,
@@ -108,6 +114,8 @@ public:
 
   int IsValidArmConfiguration(int* angles, int numofDOFs, double*	map,
                               int x_size, int y_size) const;
+
+  Point2D getEndEffectorPose(int* angles, int numofDOFs) const;
 
   // Self collision
   bool inSelfCollision(int link_starts[][2], int link_ends[][2]) const;

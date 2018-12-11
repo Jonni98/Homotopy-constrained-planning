@@ -316,6 +316,38 @@ int DiscreteArmPlanner::IsValidArmConfiguration(int* angles, int numofDOFs, doub
   return 1;
 }
 
+DiscreteArmPlanner::Point2D DiscreteArmPlanner::getEndEffectorPose(int *angles,
+                                                                   int numofDOFs) const
+{
+  double cont_angles[numofDOFs];
+  for (int i=0; i<numofDOFs; ++i)
+  {
+    cont_angles[i] = discToCont(angles[i]);
+  }
+
+  double x0,y0,x1,y1;
+  int i;
+
+  //iterate through all the links starting with the base
+  x1 = ((double)x_size_)/2.0;
+  y1 = 0;
+  for(i = 0; i < numofDOFs; i++)
+  {
+    //compute the corresponding line segment
+    x0 = x1;
+    y0 = y1;
+    x1 = x0 + LINKLENGTH_CELLS*cos(2*PI-cont_angles[i]);
+    y1 = y0 - LINKLENGTH_CELLS*sin(2*PI-cont_angles[i]);
+
+  }
+
+  Point2D end_effector_pose;
+  end_effector_pose.x_ = x1;
+  end_effector_pose.y_ = y1;
+
+  return end_effector_pose;
+}
+
 // Self collision
 bool DiscreteArmPlanner::inSelfCollision(int link_starts[][2], int link_ends[][2]) const
 {

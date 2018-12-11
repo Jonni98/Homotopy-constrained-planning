@@ -83,6 +83,8 @@ public:
 
   std::vector<VertexPtr> getPath();
 
+  std::vector<Point2D> getEndEffectorPath();
+
 private:
 
   PriorityQueue open_;
@@ -98,6 +100,8 @@ private:
                      ArmStateEqual> explored_;
 
   std::vector<VertexPtr> path_;
+
+  std::vector<Point2D> end_effector_path_;
 };
   
 

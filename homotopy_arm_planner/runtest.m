@@ -12,11 +12,13 @@ imagesc(envmap'); axis square; colorbar; colormap jet; hold on;
 %armplan should be a matrix of D by N 
 %where D is the number of DOFs in the arm (length of armstart) and
 %N is the number of steps in the plan 
-armplan = armplanner(envmap, armstart, armgoal, planner_id); 
+[armplan, endeffector_armplan] = armplanner(envmap, armstart, armgoal, planner_id); 
 
 fprintf(1, 'plan of length %d was found\n', size(armplan,1));
 
 %draw the plan
+plot(endeffector_armplan(:,1), endeffector_armplan(:,2), 'g-')
+
 midx = size(envmap,2)/2;
 x = zeros(length(armstart)+1,1);
 x(1) = midx;
@@ -29,5 +31,6 @@ for i = 1:size(armplan)
     plot(x,y, 'c-');
     pause(0.1);
 end
+
 
 %armplan
