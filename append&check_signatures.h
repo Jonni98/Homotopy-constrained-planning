@@ -44,9 +44,33 @@ string append_signature(string signature_state, string signature_action)
   // cout<<"BHBJ "<<signature_state;
   return signature_state;
 }
+
+string new_append_signature(string signature_state, string signature_action)
+{
+  if(signature_action[0]!='-')
+  {
+    if(signature_state[signature_state.size()-1]==signature_action[0])
+    {
+      if(signature_state[signature_state.size()-2]=='-') signature_state.erase(signature_state.size()-2,2);
+      return signature_state;
+    }
+    else signature_state+=signature_action;
+  }
+  else
+  {
+    if(signature_state[signature_state.size()-1]==signature_action[1])
+    {
+      if(signature_state[signature_state.size()-2]!='-') signature_state.erase(signature_state.size()-1,1);
+      return signature_state;
+    }
+    else signature_state+=signature_action;
+  }
+  return signature_state;
+}
+
 string find_signature_action(node *current, node*successor,vector<Point2f> representative_points, int dX)
 {
-  for(int i=0;i<representative_points.size();i++)
+  for(int i=0;i<3;i++)
     {
       if(int(representative_points[i].x)==current->x)
       {
@@ -59,7 +83,7 @@ string find_signature_action(node *current, node*successor,vector<Point2f> repre
         }
       }
     }
-  for(int i=0;i<representative_points.size();i++)
+  for(int i=0;i<3;i++)
     {
       if(int(representative_points[i].x)==successor->x)
       {

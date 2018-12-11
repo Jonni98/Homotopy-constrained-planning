@@ -97,7 +97,7 @@ int planner(double** map,string desired_signature, vector<Point2f> representativ
   node* start; node* goal;
   goal = new node;
   goal->x = 499;goal->y = 499; goal->h = 0;
-  goal->signature = "1";
+  goal->signature = "12";
   start = new node;
   start->x = 0;
   start->y = 0;
