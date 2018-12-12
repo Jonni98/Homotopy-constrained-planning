@@ -64,7 +64,8 @@ public:
         int x_size,
         int y_size,
         double* armstart_anglesV_rad,
-        double* armgoal_anglesV_rad);
+        double* armgoal_anglesV_rad,
+        Point2D end_effector_goal=Point2D());
 
   void permuteWithRepetition(const char *str,
                              std::string prefix,
@@ -73,6 +74,9 @@ public:
                              std::vector<std::string> &perm_sequence);
 
   std::vector<VertexPtr> getValidSuccessors(const VertexPtr& current_vertex);
+
+  double euclideanDistance(const Point2D& point_a,
+                           const Point2D& point_b);
 
   bool getCost(const VertexPtr& current_vertex,
                const VertexPtr &successor,
@@ -105,6 +109,9 @@ private:
   std::vector<VertexPtr> path_;
 
   std::vector<Point2D> end_effector_path_;
+
+  // End effector planning
+  Point2D end_effector_goal_;
 };
   
 

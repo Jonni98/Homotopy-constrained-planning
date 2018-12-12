@@ -45,16 +45,19 @@ AStar::AStar(double*	map,
              int x_size,
              int y_size,
              double* armstart_anglesV_rad,
-             double* armgoal_anglesV_rad) : DiscreteArmPlanner(map,
-                                                               x_size,
-                                                               y_size,
-                                                               armstart_anglesV_rad,
-                                                               armgoal_anglesV_rad),
-                                                               hsign_handle_(std::make_shared<HSignature>(this,
-                                                                                                          map,
-                                                                                                          x_size,
-                                                                                                          y_size))
+             double* armgoal_anglesV_rad,
+             Point2D end_effector_goal) : end_effector_goal_(end_effector_goal),
+                                          DiscreteArmPlanner(map,
+                                                             x_size,
+                                                             y_size,
+                                                             armstart_anglesV_rad,
+                                                             armgoal_anglesV_rad),
+                                                             hsign_handle_(std::make_shared<HSignature>(this,
+                                                                                                        map,
+                                                                                                        x_size,
+                                                                                                        y_size))
 {
+  end_effector_goal_ = getEndEffectorPose(armgoal_anglesV_rad_, NUM_DOF);
 }
 
 // The main recursive method to print all possible strings of length "length"
@@ -153,13 +156,31 @@ std::vector<VertexPtr> AStar::getValidSuccessors(const VertexPtr& current_vertex
   return successors;
 }
 
+double AStar::euclideanDistance(const Point2D &point_a,
+                                const Point2D &point_b)
+{
+  return std::sqrt(std::pow(point_a.x_-point_b.x_,2) +
+                   std::pow(point_a.y_-point_b.y_,2));
+}
+
 bool AStar::getCost(const VertexPtr &current_vertex,
                        const VertexPtr &successor,
                        double& cost)
 {
+#if COST_TYPE_JOINT_SPACE
   cost = current_vertex->g_cost_ +
          distanceBetweenVertices(current_vertex, successor);
   return true;
+#elif COST_TYPE_TASK_SPACE
+  DiscreteArmPlanner::Point2D current_end_effector_pose =
+          getEndEffectorPose(current_vertex->state_.q_, NUM_DOF);
+  DiscreteArmPlanner::Point2D successor_end_effector_pose =
+          getEndEffectorPose(successor->state_.q_, NUM_DOF);
+
+  cost = current_vertex->g_cost_ +
+         euclideanDistance(current_end_effector_pose, successor_end_effector_pose);
+  return true;
+#endif
 }
 
 bool AStar::run(ArmState& start_state,
@@ -196,21 +217,38 @@ bool AStar::run(ArmState& start_state,
 
     closed_[least_cost_vertex->state_] = true;
 
+#if COST_TYPE_JOINT_SPACE
     if (closed_.find(goal_state) != closed_.end())
     {
-//        std::cout << closed_[goal_state] << std::endl;
       std::cout << "Goal node expanded. Terminating search!" << std::endl;
       goal_found = true;
       break;
     }
+#elif COST_TYPE_TASK_SPACE
+    DiscreteArmPlanner::Point2D least_cost_end_effector_pose =
+            getEndEffectorPose(least_cost_vertex->state_.q_, NUM_DOF);
 
+    if (euclideanDistance(least_cost_end_effector_pose, end_effector_goal_) < 0.1)
+    {
+      for (int i=0; i<NUM_DOF; ++i)
+      {
+        goal_state.q_[i] = least_cost_vertex->state_.q_[i];
+      }
+      std::cout << "Goal node expanded. Terminating search!" << std::endl;
+      goal_found = true;
+      break;
+    }
+#endif
+
+
+
+#if DEBUG
 //      if (closed_[goal_state])
 //      {
 //        std::cout << "Goal node expanded. Terminating search!" << std::endl;
 //        break;
 //      }
 
-#if DEBUG
     ++num_expansions;
 
     if (distanceBetweenVertices(goal_state, least_cost_vertex->state_) < nearest_state_dist)
@@ -250,8 +288,18 @@ bool AStar::run(ArmState& start_state,
 #if DEBUG
           successor->depth_ = least_cost_vertex->depth_+1;
 #endif
+
+#if COST_TYPE_JOINT_SPACE
           double f_cost = new_cost +
                           HEURISTIC_INFLATION*distanceBetweenVertices(successor->state_, goal_state);
+#elif COST_TYPE_TASK_SPACE
+          DiscreteArmPlanner::Point2D successor_end_effector_pose =
+                  getEndEffectorPose(successor->state_.q_, NUM_DOF);
+
+          double f_cost = new_cost +
+                          HEURISTIC_INFLATION*std::sqrt(std::pow(successor_end_effector_pose.x_-end_effector_goal_.x_,2) +
+                                                        std::pow(successor_end_effector_pose.y_-end_effector_goal_.y_,2));
+#endif
           if (successor->heap_index_ == -1)
           {
             open_.insert(successor);

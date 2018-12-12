@@ -69,6 +69,11 @@ public:
 
   struct Point2D
   {
+    Point2D() : x_(0.0),
+                y_(0.0)
+    {
+    }
+
     double x_;
     double y_;
   };
