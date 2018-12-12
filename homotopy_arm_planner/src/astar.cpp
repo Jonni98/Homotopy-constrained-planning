@@ -180,6 +180,8 @@ bool AStar::getCost(const VertexPtr &current_vertex,
   cost = current_vertex->g_cost_ +
          euclideanDistance(current_end_effector_pose, successor_end_effector_pose);
   return true;
+#elif COST_TYPE_HOMOTOPY_SPACE
+
 #endif
 }
 
@@ -238,6 +240,8 @@ bool AStar::run(ArmState& start_state,
       goal_found = true;
       break;
     }
+#elif COST_TYPE_HOMOTOPY_SPACE
+
 #endif
 
 

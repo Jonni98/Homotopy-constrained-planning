@@ -46,6 +46,7 @@
 #define USE_HSIGNATURE_HEURISTIC true
 
 #define COST_TYPE_JOINT_SPACE false
-#define COST_TYPE_TASK_SPACE true
+#define COST_TYPE_TASK_SPACE false
+#define COST_TYPE_HOMOTOPY_SPACE true
 
 #define AVOID_SELF_COLLISION false

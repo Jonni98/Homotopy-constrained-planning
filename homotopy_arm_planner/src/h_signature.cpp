@@ -221,4 +221,10 @@ std::vector<int> HSignature::updateSignature(const homotopy_planner::ArmState &f
   return updated_signature;
 }
 
+int HSignature::computeSignatureMismatch(const std::vector<int> from_sign,
+                                         const std::vector<int> to_sign) const
+{
+  
+}
+
 } // namespace homotopy_planner
