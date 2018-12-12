@@ -46,12 +46,25 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/features2d/features2d.hpp>
 
+// Project
+#include <hash_functions.h>
+#include <discrete_arm_planner.h>
+
 namespace homotopy_planner
 {
+
+class HSignature;
+
+typedef std::shared_ptr<HSignature> HSignaturePtr;
 
 class HSignature
 {
 public:
+
+  HSignature(const DiscreteArmPlanner* planner_handle,
+             double*	map,
+             int x_size,
+             int y_size);
 
   std::vector<cv::Point2f> findRepresentativePoints(int x_size, int y_size, double *map_array);
 
@@ -60,6 +73,17 @@ public:
   std::vector<std::string> permGenerator(int n, int k, std::vector<int> symbols);
 
   std::vector<std::string> generateSignatures(std::vector<cv::Point2f> representative_points);
+
+  std::vector<int> updateSignature(const ArmState& from_state,
+                                   const ArmState& to_state);
+
+private:
+
+  const DiscreteArmPlanner* planner_handle_;
+
+  std::vector<cv::Point2f> representative_points_;
+
+
 };
 
 } // namespace homotopy_planner

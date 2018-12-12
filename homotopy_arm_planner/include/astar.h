@@ -36,6 +36,7 @@
 #include <config.h>
 #include <hash_functions.h>
 #include <discrete_arm_planner.h>
+#include <h_signature.h>
 
 // STL
 #include <unordered_map>
@@ -87,9 +88,7 @@ public:
 
 private:
 
-  HSignature h_sign_;
-
-  std::vector<std::string> signatures_;
+  HSignaturePtr hsign_handle_;
 
   PriorityQueue open_;
 

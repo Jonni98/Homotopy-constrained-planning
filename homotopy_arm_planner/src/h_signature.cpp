@@ -38,6 +38,14 @@
 namespace homotopy_planner
 {
 
+HSignature::HSignature(const DiscreteArmPlanner* planner_handle,
+                       double *map,
+                       int x_size,
+                       int y_size) : planner_handle_(planner_handle)
+{
+  representative_points_ = findRepresentativePoints(x_size, y_size, map);
+}
+
 std::vector<cv::Point2f> HSignature::findRepresentativePoints(int x_size,
                                                               int y_size,
                                                               double *map_array)
@@ -154,6 +162,63 @@ std::vector<int> HSignature::computeReducedWord(std::vector<int> word,
     }
   }
   return reduced_word;
+}
+
+std::vector<int> HSignature::updateSignature(const homotopy_planner::ArmState &from_state,
+                                             const homotopy_planner::ArmState &to_state)
+{
+  // TODO Get rid of the redundant `current_signature` variable
+  std::vector<int> current_signature = from_state.signature_;
+  std::vector<int> updated_signature = current_signature;
+
+  DiscreteArmPlanner::Point2D from_end_effector_pose =
+          planner_handle_->getEndEffectorPose(from_state.q_, NUM_DOF);
+  DiscreteArmPlanner::Point2D to_end_effector_pose =
+          planner_handle_->getEndEffectorPose(to_state.q_, NUM_DOF);
+
+  int sign = 0;
+  for (const auto& rep_point : representative_points_)
+  {
+    sign++;
+    if (from_end_effector_pose.y_ < rep_point.y ||
+        to_end_effector_pose.y_ < rep_point.y)
+    {
+      if (from_end_effector_pose.x_ < rep_point.x &&
+          to_end_effector_pose.x_ > rep_point.x)
+      {
+        if (current_signature.empty())
+        {
+          updated_signature.push_back(sign);
+        }
+        else if (current_signature.back() == -1*sign)
+        {
+          updated_signature.pop_back();
+        }
+        else
+        {
+          updated_signature.push_back(sign);
+        }
+      }
+      else if (from_end_effector_pose.x_ > rep_point.x &&
+               to_end_effector_pose.x_ < rep_point.x)
+      {
+        if (current_signature.empty())
+        {
+          updated_signature.push_back(-sign);
+        }
+        else if (current_signature.back() == sign)
+        {
+          updated_signature.pop_back();
+        }
+        else
+        {
+          updated_signature.push_back(-sign);
+        }
+      }
+    }
+  }
+
+  return updated_signature;
 }
 
 } // namespace homotopy_planner

@@ -64,7 +64,9 @@ struct ArmState
   {
   }
 
-  ArmState(int* joint_angles) : q_(new int[NUM_DOF])
+  ArmState(int* joint_angles,
+           std::vector<int> signature = std::vector<int>()) : q_(new int[NUM_DOF]),
+                                                              signature_(std::move(signature))
   {
     std::copy(joint_angles, joint_angles + static_cast<int>(NUM_DOF), q_);
   }
@@ -75,6 +77,8 @@ struct ArmState
 //  }
 
   int* q_;
+
+  std::vector<int> signature_;
 };
 
 struct ArmStateEqual

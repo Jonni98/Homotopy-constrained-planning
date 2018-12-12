@@ -49,18 +49,20 @@ AStar::AStar(double*	map,
                                                                x_size,
                                                                y_size,
                                                                armstart_anglesV_rad,
-                                                               armgoal_anglesV_rad)
+                                                               armgoal_anglesV_rad),
+                                                               hsign_handle_(std::make_shared<HSignature>(this,
+                                                                                                          map,
+                                                                                                          x_size,
+                                                                                                          y_size))
 {
-  std::vector<cv::Point2f> representative_points = h_sign_.findRepresentativePoints(x_size, y_size, map);
-  signatures_ = h_sign_.generateSignatures(representative_points);
 }
 
 // The main recursive method to print all possible strings of length "length"
 void AStar::permuteWithRepetition(const char *str,
-                                     std::string prefix,
-                                     const int n,
-                                     const int r,
-                                     std::vector<std::string> &perm_sequence)
+                                   std::string prefix,
+                                   const int n,
+                                   const int r,
+                                   std::vector<std::string> &perm_sequence)
 {
   if (r == 1)
   {
@@ -134,6 +136,7 @@ std::vector<VertexPtr> AStar::getValidSuccessors(const VertexPtr& current_vertex
       continue;
     }
 
+    successor_state.signature_ = hsign_handle_->updateSignature(current_vertex->state_, successor_state);
     if (explored_.find(successor_state) == explored_.end())
     {
       VertexPtr successor =
@@ -160,7 +163,7 @@ bool AStar::getCost(const VertexPtr &current_vertex,
 }
 
 bool AStar::run(ArmState& start_state,
-                   ArmState& goal_state)
+                ArmState& goal_state)
 {
   VertexPtr start_node;
   start_node = std::make_shared<Vertex>(start_state, 0.0);
@@ -260,8 +263,6 @@ bool AStar::run(ArmState& start_state,
             open_.decreaseKey(successor,
                               f_cost);
           }
-
-
         }
       }
     }
