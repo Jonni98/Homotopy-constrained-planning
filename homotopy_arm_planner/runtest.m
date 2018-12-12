@@ -31,6 +31,7 @@ for i = 1:size(armplan)
     plot(x,y, 'c-');
     pause(0.1);
 end
+plot(x,y, 'r-');
 
 
 %armplan
