@@ -28,17 +28,17 @@ void colored_display_map(double ** map, int height, int width)
       Vec3b color = cv_map.at<Vec3b>(Point(x,y));
       if(map[x][y]==0)
       {
-          color[0] = 0;
+          color[0] = 255;
           color[1] = 255;
-          color[2] = 0;
+          color[2] = 255;
           // cout << "Pixel >200 :" << x << "," << y << endl;
       }
       else if(map[x][y]==255)
       {
         // cout<<"HI";
           color[0] = 0;
-          color[1] = 0;
-          color[2] = 255;
+          color[1] = 255;
+          color[2] = 0;
       }
       else
       {
@@ -57,6 +57,7 @@ void colored_display_map(double ** map, int height, int width)
 void colored_display_path(double ** map, int height, int width, vector<node*> path)
 {
   // cout<<"HI";
+  waitKey(2000);
   Mat cv_map(height, width, CV_8UC3,Scalar(0));
   for(int y=0;y<height;y++)
   {
