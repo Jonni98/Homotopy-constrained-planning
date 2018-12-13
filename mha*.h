@@ -61,8 +61,8 @@ void print_path(double**map,node* goal, node *start, int y_size, int x_size)
     path.push_back(current);
     current = current->parent;
   }
-  // display_map(map,y_size,x_size);
-  colored_display_path(map,y_size,x_size,path);
+  colored_display_map(map,y_size,x_size);
+  // colored_display_path(map,y_size,x_size,path);
 
 }
 #include "append&check_signatures.h"
@@ -139,11 +139,11 @@ int planner(double** map,string desired_signature, vector<Point2f> representativ
   // cout<<state_signature<<'\n';
   node* start; node* goal;
   goal = new node;
-  goal->x = 470;goal->y = 300; goal->h[0] = goal->h[1] = 0;
-  goal->signature = "123";
+  goal->x = 490;goal->y = 490; goal->h[0] = goal->h[1] = 0;
+  goal->signature = "13";
   start = new node;
-  start->x = 0;
-  start->y = 0;
+  start->x = 10;
+  start->y = 10;
   start->g = 0;
   start->h[0] = (heuristic(start,goal));
   start->h[1] = heuristic(start,goal)+ 100*(my_heuristic(start,goal));

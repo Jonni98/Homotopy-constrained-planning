@@ -2,6 +2,7 @@
 #include<math.h>
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
+#include<fstream>
 #define NUMOFDIRS 8
 int dX[NUMOFDIRS] = {-1, -1, -1, 0, 0, 1, 1};
 int dY[NUMOFDIRS] = { -1, 0, 1, -1, 1, 0, 1};
@@ -54,16 +55,27 @@ void print_path(double**map,node* goal, node *start, int y_size, int x_size)
 {
   node*current = goal;
   vector<node*> path;
-  while(current->x!=start->x&&current->y!=start->y)
+  // ofstream myfile;
+  // myfile.open ("PATH_3.txt");
+  cout<<"START "<<start->x<<' '<<start->y<<'\n';
+  while(current->x!=start->x && current->y!=start->y)
   {
-    cout<<current->x<<' '<<current->y<<' '<<current->signature<<'\n';
+    // cout<<current->x<<' '<<current->y<<' '<<current->signature<<'\n';
+    // myfile<<current->x<<","<<current->y<<endl;
     map[current->x][current->y] = 122;
     path.push_back(current);
     current = current->parent;
-  }
-  colored_display_path(map,y_size,x_size,path);
+    cout<<"CURRENT "<<current->x<<' '<<current->y<<' '<<current->signature<<'\n';
 
-  // colored_display_map(map,y_size,x_size);
+  }
+  cout<<"--p-"<<'\n';
+  // cout<<"CURRENT "<<current->x<<' '<<current->y<<' '<<current->signature<<'\n';
+  // cout<<"CURRENT "<<current->parent->x<<' '<<current->parent->y<<' '<<current->parent->signature<<'\n';
+
+  // myfile.close();
+  // colored_display_map(map,y_size,x_size,pat);
+
+  colored_display_map(map,y_size,x_size);
 }
 #include "append&check_signatures.h"
 float my_heuristic(node* current, node* goal)
@@ -133,11 +145,11 @@ int planner(double** map,string desired_signature, vector<Point2f> representativ
   std::unordered_map <std::size_t, node*> closed_map_of_states;
   node* start; node* goal;
   goal = new node;
-  goal->x = 470;goal->y = 300; goal->h = 0;
+  goal->x = 490;goal->y = 490; goal->h = 0;
   goal->signature = "123";
   start = new node;
-  start->x = 0;
-  start->y = 0;
+  start->x = 10;
+  start->y = 10;
   start->g = 0;
   start->h = heuristic(start,goal);//+ 30*my_heuristic(start,goal);
   start->signature = "";
@@ -170,6 +182,7 @@ int planner(double** map,string desired_signature, vector<Point2f> representativ
       print_path(map,current,start,map_y_size,map_x_size);
       return 0;
     }
+    // cout<<current->x<<' '<<current->y<<'\n';
     // if(current->signature.size()==0 && current->x>=422 && current->y<=200) cout<<current->x<<' '<<current->y<<'\n';
     for(int i=0;i<NUMOFDIRS;i++)
     {
