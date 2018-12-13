@@ -293,16 +293,17 @@ bool AStar::run(ArmState& start_state,
           successor->depth_ = least_cost_vertex->depth_+1;
 #endif
 
+          double f_cost;
 #if COST_TYPE_JOINT_SPACE
-          double f_cost = new_cost +
-                          HEURISTIC_INFLATION*distanceBetweenVertices(successor->state_, goal_state);
+          f_cost = new_cost +
+                   HEURISTIC_INFLATION*distanceBetweenVertices(successor->state_, goal_state);
 #elif COST_TYPE_TASK_SPACE
           DiscreteArmPlanner::Point2D successor_end_effector_pose =
                   getEndEffectorPose(successor->state_.q_, NUM_DOF);
 
-          double f_cost = new_cost +
-                          HEURISTIC_INFLATION*std::sqrt(std::pow(successor_end_effector_pose.x_-end_effector_goal_.x_,2) +
-                                                        std::pow(successor_end_effector_pose.y_-end_effector_goal_.y_,2));
+          f_cost = new_cost +
+                   HEURISTIC_INFLATION*std::sqrt(std::pow(successor_end_effector_pose.x_-end_effector_goal_.x_,2) +
+                                                 std::pow(successor_end_effector_pose.y_-end_effector_goal_.y_,2));
 #endif
           if (successor->heap_index_ == -1)
           {

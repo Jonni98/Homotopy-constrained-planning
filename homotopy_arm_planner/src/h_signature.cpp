@@ -44,6 +44,11 @@ HSignature::HSignature(const DiscreteArmPlanner* planner_handle,
                        int y_size) : planner_handle_(planner_handle)
 {
   representative_points_ = findRepresentativePoints(x_size, y_size, map);
+  
+//  for (const auto& rep_point : representative_points_)
+//  {
+//    std::cout << rep_point.x << "\t" << rep_point.y << std::endl;
+//  }
 }
 
 std::vector<cv::Point2f> HSignature::findRepresentativePoints(int x_size,

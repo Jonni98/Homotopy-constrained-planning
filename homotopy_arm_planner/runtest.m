@@ -17,7 +17,7 @@ imagesc(envmap'); axis square; colorbar; colormap jet; hold on;
 fprintf(1, 'plan of length %d was found\n', size(armplan,1));
 
 %draw the plan
-plot(endeffector_armplan(:,1), endeffector_armplan(:,2), 'g-')
+plot(endeffector_armplan(:,1), endeffector_armplan(:,2), 'w-', 'LineWidth',2)
 
 midx = size(envmap,2)/2;
 x = zeros(length(armstart)+1,1);
@@ -28,10 +28,14 @@ for i = 1:size(armplan)
         x(j+1) = x(j) + LINKLENGTH_CELLS*cos(armplan(i,j));
         y(j+1) = y(j) + LINKLENGTH_CELLS*sin(armplan(i,j));
     end
-    plot(x,y, 'c-');
+    if i==1
+        plot(x,y, 'r-','LineWidth',2);
+    else
+        plot(x,y, 'c-');        
+    end
     pause(0.1);
 end
-plot(x,y, 'r-');
+plot(x,y, 'g-','LineWidth',2);
 
 
 %armplan

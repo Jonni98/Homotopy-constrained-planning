@@ -1,12 +1,13 @@
 cmake_minimum_required(VERSION 2.8.9)
 project(homotopy_planner)
 
-find_package( OpenCV REQUIRED )
+#find_package( OpenCV REQUIRED )
 
 #Bring the headers
 include_directories(include
-                    /usr/local/MATLAB/R2018a/extern/include
-                   /opt/ros/kinetic/include/opencv-3.3.1-dev)
+                    /usr/local/MATLAB/R2017b/extern/include
+                    /usr/lib/x86_64-linux-gnu)
+
 
 #Can manually add the sources using the set command as follows:
 
