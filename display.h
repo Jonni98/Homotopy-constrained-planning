@@ -42,7 +42,7 @@ void colored_display_map(double ** map, int height, int width)
       }
       else
       {
-        // cout<<"WHATU da fuck"<<'\n';
+        
         color[0] = 255;
         color[1] = 0;
         color[2] = 0;
@@ -121,7 +121,7 @@ void display_expanded_states(double ** map, int height, int width, std::vector<P
     cv_map.at<uchar>(data[k]) = color;
   }
 
-  // cout<<"WTf";
+ 
   imshow("hi",cv_map);
   waitKey(0);
 }
