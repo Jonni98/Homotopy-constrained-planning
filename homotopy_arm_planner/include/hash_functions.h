@@ -132,14 +132,16 @@ namespace std
       {
         boost::hash_combine(hash, state.q_[i]);
       }
-#if DEBUG
-//      std::cout<< "hash: " << hash<<std::endl;
+      
+#if COST_TYPE_HOMOTOPY_SPACE
+      std::string state_sign;
+      for (const auto& letter : state.signature_)
+      {
+        state_sign += std::to_string(letter);
+      }
+      boost::hash_combine(hash, state_sign);
 #endif
       return hash;
-
-//      return static_cast<std::size_t>((73856093 * state.q_[0]) ^
-//                                      (19349663 * state.q_[1]) ^
-//                                      (2654435761 * state.q_[2]));
     }
   };
 } // namespace std

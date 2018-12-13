@@ -229,7 +229,22 @@ std::vector<int> HSignature::updateSignature(const homotopy_planner::ArmState &f
 int HSignature::computeSignatureMismatch(const std::vector<int> from_sign,
                                          const std::vector<int> to_sign) const
 {
+  int edit_distance = 0;
   
+  int min_sign_length = std::min(from_sign.size(), to_sign.size());
+  
+  for (int i=0; i<min_sign_length; ++i)
+  {
+    if (from_sign[i] != to_sign[i])
+    {
+      ++edit_distance;
+    }
+  }
+  edit_distance *= SIGN_CHAR_MISMATCH_PENALTY;
+  
+  edit_distance += std::abs(from_sign.size()-to_sign.size())*SIGN_LENGTH_MISMATCH_PENALTY;
+  
+  return edit_distance;
 }
 
 } // namespace homotopy_planner

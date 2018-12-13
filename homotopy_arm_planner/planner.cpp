@@ -136,8 +136,13 @@ void mexFunction( int nlhs, mxArray *plhs[],
       start_q[i] = planner.contToDisc(armstart_anglesV_rad[i]);
       goal_q[i] = planner.contToDisc(armgoal_anglesV_rad[i]);
     }
+    
+    // Signatures
+    int goal_sign[] = {-2};
+    std::vector<int> goal_sign_vec (goal_sign, goal_sign + sizeof(goal_sign) / sizeof(int) );
+  
     homotopy_planner::ArmState start_state(start_q);
-    homotopy_planner::ArmState goal_state(goal_q);
+    homotopy_planner::ArmState goal_state(goal_q, goal_sign_vec);
 
     if (!planner.IsValidArmConfiguration(start_q, NUM_DOF, map, x_size, y_size))
     {

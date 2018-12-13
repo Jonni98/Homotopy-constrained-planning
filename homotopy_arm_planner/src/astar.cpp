@@ -139,7 +139,10 @@ std::vector<VertexPtr> AStar::getValidSuccessors(const VertexPtr& current_vertex
       continue;
     }
 
-    successor_state.signature_ = hsign_handle_->updateSignature(current_vertex->state_, successor_state);
+#if COST_TYPE_HOMOTOPY_SPACE
+    successor_state.signature_ = hsign_handle_->updateSignature(current_vertex->state_,
+                                                                successor_state);
+#endif
     if (explored_.find(successor_state) == explored_.end())
     {
       VertexPtr successor =
@@ -181,7 +184,16 @@ bool AStar::getCost(const VertexPtr &current_vertex,
          euclideanDistance(current_end_effector_pose, successor_end_effector_pose);
   return true;
 #elif COST_TYPE_HOMOTOPY_SPACE
+  DiscreteArmPlanner::Point2D current_end_effector_pose =
+          getEndEffectorPose(current_vertex->state_.q_, NUM_DOF);
+  DiscreteArmPlanner::Point2D successor_end_effector_pose =
+          getEndEffectorPose(successor->state_.q_, NUM_DOF);
 
+  cost = current_vertex->g_cost_ +
+         euclideanDistance(current_end_effector_pose, successor_end_effector_pose) +
+         hsign_handle_->computeSignatureMismatch(current_vertex->state_.signature_,
+                                                 successor->state_.signature_);
+  return true;
 #endif
 }
 
@@ -241,7 +253,30 @@ bool AStar::run(ArmState& start_state,
       break;
     }
 #elif COST_TYPE_HOMOTOPY_SPACE
-
+    if (least_cost_vertex->state_.signature_.size() == goal_state.signature_.size())
+    {
+      DiscreteArmPlanner::Point2D least_cost_end_effector_pose =
+        getEndEffectorPose(least_cost_vertex->state_.q_, NUM_DOF);
+    
+      if (euclideanDistance(least_cost_end_effector_pose, end_effector_goal_) < 0.1)
+      {
+        goal_found = true;
+        for (int j=0; j<goal_state.signature_.size(); ++j)
+        {
+          goal_found = goal_found && (least_cost_vertex->state_.signature_[j] == goal_state.signature_[j]);
+        }
+        
+        if (goal_found)
+        {
+          for (int i=0; i<NUM_DOF; ++i)
+          {
+            goal_state.q_[i] = least_cost_vertex->state_.q_[i];
+          }
+          std::cout << "Goal node expanded. Terminating search!" << std::endl;
+          break;
+        }
+      }
+    }
 #endif
 
 
@@ -304,6 +339,15 @@ bool AStar::run(ArmState& start_state,
           f_cost = new_cost +
                    HEURISTIC_INFLATION*std::sqrt(std::pow(successor_end_effector_pose.x_-end_effector_goal_.x_,2) +
                                                  std::pow(successor_end_effector_pose.y_-end_effector_goal_.y_,2));
+#elif COST_TYPE_HOMOTOPY_SPACE
+          DiscreteArmPlanner::Point2D successor_end_effector_pose =
+            getEndEffectorPose(successor->state_.q_, NUM_DOF);
+  
+          f_cost = new_cost +
+                   HEURISTIC_INFLATION*std::sqrt(std::pow(successor_end_effector_pose.x_-end_effector_goal_.x_,2) +
+                                                 std::pow(successor_end_effector_pose.y_-end_effector_goal_.y_,2)) +
+                   100*hsign_handle_->computeSignatureMismatch(successor->state_.signature_,
+                                                               goal_state.signature_);
 #endif
           if (successor->heap_index_ == -1)
           {
