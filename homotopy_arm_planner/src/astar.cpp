@@ -122,13 +122,19 @@ std::vector<VertexPtr> AStar::getValidSuccessors(const VertexPtr& current_vertex
       }
     }
 
+#if COST_TYPE_HOMOTOPY_SPACE
+    successor_state.signature_ = hsign_handle_->updateSignature(current_vertex->state_,
+                                                                successor_state);
+#endif
+
     bool current_state_itself = true;
     for (int j=0; j<NUM_DOF; ++j)
     {
       current_state_itself = current_state_itself &&
                              (successor_state.q_[j] == current_vertex->state_.q_[j]);
     }
-
+    current_state_itself = current_state_itself && hsign_handle_->signatureEqual(successor_state.signature_,
+                                                                                 current_vertex->state_.signature_);
     if (current_state_itself)
     {
       continue;
@@ -139,10 +145,25 @@ std::vector<VertexPtr> AStar::getValidSuccessors(const VertexPtr& current_vertex
       continue;
     }
 
-#if COST_TYPE_HOMOTOPY_SPACE
-    successor_state.signature_ = hsign_handle_->updateSignature(current_vertex->state_,
-                                                                successor_state);
-#endif
+    // Suffix pruning
+    bool valid_successor_sign = successor_sign.empty()? true: false;
+    if (!successor_sign.empty())
+    {
+      for (int j=0; j<suffix_list_.size(); ++j)
+      {
+        if (hsign_handle_->signatureEqual(successor_state.signature_, suffix_list_[j]))
+        {
+          valid_successor_sign = true;
+          break;
+        }
+      }
+    }
+
+    if (!valid_successor_sign)
+    {
+      continue;
+    }
+
     if (explored_.find(successor_state) == explored_.end())
     {
       VertexPtr successor =
@@ -206,6 +227,17 @@ bool AStar::run(ArmState& start_state,
   open_.insert(start_node);
   open_.decreaseKey(start_node, 0.0);
 
+  // Suffix list
+  for (int i=0; i<goal_state.signature_.size(); ++i)
+  {
+    std::vector<int> suffix;
+    for (int j=0; j<i+1; ++j)
+    {
+      suffix.push_back(goal_state.signature_[j]);
+    }
+    suffix_list_.push_back(suffix);
+  }
+
   bool goal_found = false;
 
 #if DEBUG
@@ -260,28 +292,34 @@ bool AStar::run(ArmState& start_state,
     
       if (euclideanDistance(least_cost_end_effector_pose, end_effector_goal_) < 0.1)
       {
-        goal_found = true;
-        for (int j=0; j<goal_state.signature_.size(); ++j)
-        {
-          goal_found = goal_found && (least_cost_vertex->state_.signature_[j] == goal_state.signature_[j]);
-        }
+//        goal_found = true;
+//        for (int j=0; j<goal_state.signature_.size(); ++j)
+//        {
+//          goal_found = goal_found && (least_cost_vertex->state_.signature_[j] == goal_state.signature_[j]);
+//        }
         
-        if (goal_found)
-        {
+//        if (goal_found)
+//        {
           for (int i=0; i<NUM_DOF; ++i)
           {
             goal_state.q_[i] = least_cost_vertex->state_.q_[i];
           }
+          goal_found = true;
           std::cout << "Goal node expanded. Terminating search!" << std::endl;
           break;
-        }
+//        }
       }
     }
 #endif
 
 
-
 #if DEBUG
+    for (int i=0; i<least_cost_vertex->state_.signature_.size(); ++i)
+    {
+      std::cout << least_cost_vertex->state_.signature_[i] << "\t";
+    }
+    std::cout << std::endl;
+
 //      if (closed_[goal_state])
 //      {
 //        std::cout << "Goal node expanded. Terminating search!" << std::endl;
@@ -346,7 +384,7 @@ bool AStar::run(ArmState& start_state,
           f_cost = new_cost +
                    HEURISTIC_INFLATION*std::sqrt(std::pow(successor_end_effector_pose.x_-end_effector_goal_.x_,2) +
                                                  std::pow(successor_end_effector_pose.y_-end_effector_goal_.y_,2)) +
-                   100*hsign_handle_->computeSignatureMismatch(successor->state_.signature_,
+                   1000*hsign_handle_->computeSignatureMismatch(successor->state_.signature_,
                                                                goal_state.signature_);
 #endif
           if (successor->heap_index_ == -1)

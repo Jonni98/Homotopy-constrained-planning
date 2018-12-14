@@ -134,12 +134,17 @@ namespace std
       }
       
 #if COST_TYPE_HOMOTOPY_SPACE
-      std::string state_sign;
+//      std::string state_sign;
+//      for (const auto& letter : state.signature_)
+//      {
+//        state_sign += std::to_string(letter);
+//      }
+//      boost::hash_combine(hash, state_sign);
+
       for (const auto& letter : state.signature_)
       {
-        state_sign += std::to_string(letter);
+        boost::hash_combine(hash, letter);
       }
-      boost::hash_combine(hash, state_sign);
 #endif
       return hash;
     }

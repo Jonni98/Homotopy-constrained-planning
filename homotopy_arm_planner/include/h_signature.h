@@ -80,6 +80,9 @@ public:
   int computeSignatureMismatch(const std::vector<int> from_sign,
                                const std::vector<int> to_sign) const;
 
+  bool signatureEqual(const std::vector<int> sign_1,
+                      const std::vector<int> sign_2) const;
+
 private:
 
   const DiscreteArmPlanner* planner_handle_;

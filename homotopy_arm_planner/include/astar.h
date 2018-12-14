@@ -112,6 +112,8 @@ private:
 
   // End effector planning
   Point2D end_effector_goal_;
+
+  std::vector<std::vector<int>> suffix_list_;
 };
   
 

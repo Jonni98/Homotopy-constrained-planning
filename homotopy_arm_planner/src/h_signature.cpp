@@ -247,4 +247,20 @@ int HSignature::computeSignatureMismatch(const std::vector<int> from_sign,
   return edit_distance;
 }
 
+bool HSignature::signatureEqual(const std::vector<int> sign_1,
+                                const std::vector<int> sign_2) const
+{
+  if (sign_1.size() != sign_2.size())
+  {
+    return false;
+  }
+
+  bool sign_equal = true;
+  for (int i=0; i<sign_1.size(); ++i)
+  {
+    sign_equal = sign_equal && (sign_1[i] == sign_2[i]);
+  }
+  return sign_equal;
+}
+
 } // namespace homotopy_planner
