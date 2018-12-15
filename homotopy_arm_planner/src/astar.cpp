@@ -146,8 +146,8 @@ std::vector<VertexPtr> AStar::getValidSuccessors(const VertexPtr& current_vertex
     }
 
     // Suffix pruning
-    bool valid_successor_sign = successor_sign.empty()? true: false;
-    if (!successor_sign.empty())
+    bool valid_successor_sign = successor_state.signature_.empty()? true: false;
+    if (!successor_state.signature_.empty())
     {
       for (int j=0; j<suffix_list_.size(); ++j)
       {
@@ -384,7 +384,7 @@ bool AStar::run(ArmState& start_state,
           f_cost = new_cost +
                    HEURISTIC_INFLATION*std::sqrt(std::pow(successor_end_effector_pose.x_-end_effector_goal_.x_,2) +
                                                  std::pow(successor_end_effector_pose.y_-end_effector_goal_.y_,2)) +
-                   1000*hsign_handle_->computeSignatureMismatch(successor->state_.signature_,
+                   10*hsign_handle_->computeSignatureMismatch(successor->state_.signature_,
                                                                goal_state.signature_);
 #endif
           if (successor->heap_index_ == -1)
